@@ -1,0 +1,14 @@
+{
+    "name": "steve/palmeral_backend",
+    "authors": [{
+        "name": "Steven",
+        "email": "stevenbdf@gmail.com"
+    }],
+    "description": "",
+    "require": {
+        "illuminate/database": "*",
+        "rbdwllr/reallysimplejwt": "^2.1",
+        "vlucas/phpdotenv": "^3.6",
+        "slim/slim": "^3.12"
+    }
+}
