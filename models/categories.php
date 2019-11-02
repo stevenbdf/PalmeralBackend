@@ -7,9 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 require_once('./helpers/validator.php');
 require_once('./config/database.php');
 
-class User extends Model
+class Category extends Model
 {
     public $timestamps = false;
-    protected $primaryKey = 'id_user';
-    protected $fillable = array('email', 'password');
+    protected $table = 'categories';
+    protected $primaryKey = 'id_category';
+    protected $fillable = array('name', 'description');
 }

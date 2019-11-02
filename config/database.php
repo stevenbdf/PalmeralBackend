@@ -1,5 +1,5 @@
 <?php
-require_once('../../vendor/autoload.php');
+require_once('./vendor/autoload.php');
 ini_set('date.timezone', 'America/El_Salvador');
 $dotenv = Dotenv\Dotenv::create(__DIR__);
 $dotenv->load();

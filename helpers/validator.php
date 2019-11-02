@@ -161,7 +161,7 @@ class Validator
      */
     public function validatePhone($value)
     {
-        if (preg_match('/^[0-9]{4}+(-)+([0-9]{4})$/', $value)) {
+        if (preg_match('/^[0-9]{8}$/', $value)) {
             return true;
         } else {
             return false;
@@ -427,8 +427,9 @@ class Validator
         return $headers;
     }
 
-    public function getBearerToken($headers)
+    public function getBearerToken($req)
     {
+        $headers = $req->getHeader('HTTP_AUTHORIZATION')[0];
         // HEADER: Get the access token from the header
         if (!empty($headers)) {
             if (preg_match('/Bearer\s(\S+)/', $headers, $matches)) {
