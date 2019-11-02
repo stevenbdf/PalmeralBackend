@@ -231,7 +231,9 @@ class Validator
         if ($file) {
             if ($file['size'] <= 2097152) {
                 list($width, $height, $type) = getimagesize($file['tmp_name']);
+                
                 if (($minWidth <= $width && $minWidth <= $height) && ($maxWidth >= $width && $maxWidth >= $height)) {
+                    
                     //Tipos de imagen: 2 - JPG y 3 - PNG
                     if ($type == 2 || $type == 3) {
                         if ($name) {

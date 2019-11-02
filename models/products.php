@@ -7,9 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 require_once('./helpers/validator.php');
 require_once('./config/database.php');
 
-class Category extends Model
+class Product extends Model
 {
     public $timestamps = false;
-    protected $primaryKey = 'id_category';
-    protected $fillable = array('name', 'description');
+    protected $primaryKey = 'id_product';
+    protected $fillable = array('id_supplier', 'id_category', 'description', 'image');
 }
