@@ -231,9 +231,9 @@ class Validator
         if ($file) {
             if ($file['size'] <= 2097152) {
                 list($width, $height, $type) = getimagesize($file['tmp_name']);
-                
+
                 if (($minWidth <= $width && $minWidth <= $height) && ($maxWidth >= $width && $maxWidth >= $height)) {
-                    
+
                     //Tipos de imagen: 2 - JPG y 3 - PNG
                     if ($type == 2 || $type == 3) {
                         if ($name) {
@@ -262,12 +262,17 @@ class Validator
                 return false;
             }
         } else {
-            if (file_exists($path . $name)) {
-                $this->imageName = $name;
-                return true;
-            } else {
+            if ($path . $name == './images/') {
                 $this->imageError = 4;
                 return false;
+            } else {
+                if (file_exists($path . $name)) {
+                    $this->imageName = $name;
+                    return true;
+                } else {
+                    $this->imageError = 4;
+                    return false;
+                }
             }
         }
     }
@@ -337,8 +342,12 @@ class Validator
     public function saveFile($file, $path, $name)
     {
         if (file_exists($path)) {
-            if (move_uploaded_file($file['tmp_name'], $path . $name)) {
-                return true;
+            if ($file) {
+                if (move_uploaded_file($file['tmp_name'], $path . $name)) {
+                    return true;
+                } else {
+                    return false;
+                }
             } else {
                 return false;
             }
