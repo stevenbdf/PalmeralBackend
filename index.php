@@ -16,6 +16,8 @@ $app->group('/users', function () {
     $this->delete('/delete', UsersController::class . ':delete');
     $this->post('/login', UsersController::class . ':login');
     $this->post('/find', UsersController::class . ':find');
+    $this->post('/resetPassword', UsersController::class . ':resetPassword');
+    $this->get('/validateToken', UsersController::class . ':validateToken');
 });
 
 $app->group('/suppliers', function () {

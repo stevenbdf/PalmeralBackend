@@ -1,11 +1,16 @@
 <?php
 
 use Palmeral\Validator;
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
 use \Psr\Http\Message\ServerRequestInterface as Request;
 use \Psr\Http\Message\ResponseInterface as Response;
 use ReallySimpleJWT\Token;
 
 require './models/users.php';
+require './helpers/PHPMailer/Exception.php';
+require './helpers/PHPMailer/PHPMailer.php';
+require './helpers/PHPMailer/SMTP.php';
 
 class UsersController extends Validator
 {
@@ -129,6 +134,68 @@ class UsersController extends Validator
                 return $res->withStatus(200)->withJson(['message' => 'Usuario encontrado', 'data' => $user]);
             }
             return $res->withStatus(400)->withJson(['message' => 'Usuario no encontrado']);
+        }
+        return $res->withStatus(403)->withJson(['message' => 'Acceso no autorizado']);
+    }
+
+    public function resetPassword(Request $req,  Response $res)
+    {
+        $body = $req->getParsedBody();
+        
+
+        $mail = new PHPMailer(true);
+
+        if ($user = $this->users->where('email', $body['email'])->first()) {
+            $contrasenaCorrecta = false;
+            while (!$contrasenaCorrecta) {
+                $nuevaContrasena = $this->generateRandomString(9);
+                if ($this->validatePassword($nuevaContrasena)) {
+                    $user->password
+                        = password_hash($nuevaContrasena, PASSWORD_DEFAULT);
+                    $contrasenaCorrecta = true;
+                    $user->save();
+                }
+            }
+
+            try {
+                //Server settings
+                $mail->SMTPDebug = 0;                                       // Enable verbose debug output
+                $mail->isSMTP();                                            // Set mailer to use SMTP
+                $mail->Host       = 'smtp.gmail.com';                       // Specify main and backup SMTP servers
+                $mail->SMTPAuth   = true;                                   // Enable SMTP authentication
+                $mail->Username   = 'inventario.palmeral@gmail.com';        // SMTP username
+                $mail->Password   = 'Qwerty123$';                             // SMTP password
+                $mail->SMTPSecure = 'tls';                                  // Enable TLS encryption, `ssl` also accepted
+                $mail->Port       = 587;
+                $mail->CharSet = 'UTF-8';                                // TCP port to connect to
+
+                //Recipients
+                $mail->setFrom('inventario.palmeral@gmail.com', 'Inventario Palmeral');
+                $mail->addAddress($body['email']);
+
+                // Content
+                $mail->isHTML(true);                                  // Set email format to HTML
+                $mail->Subject = 'Recuperación de Contraseña';
+                $mail->Body    = "Solicitaste reestablecer tu contraseña, tu nueva contraseña es: <b>$nuevaContrasena</b>";
+                $mail->AltBody = "Solicitaste reestablecer tu contraseña, tu nueva contraseña es: $nuevaContrasena";
+
+                if ($mail->send()) {
+                    return $res->withStatus(200)->withJson(['message' => 'Se ha enviado tu nueva contraseña, revisa tu correo electronico']);
+                } else {
+                    return $res->withStatus(500)->withJson(['message' => 'Error al enviar correo, solicita ayuda en stevenbdf@gmail.com']);
+                }
+            } catch (Exception $e) {
+                return $res->withStatus(500)->withJson(['message' => 'Error al enviar correo, solicita ayuda en stevenbdf@gmail.com']);
+            }
+        }
+
+        return $res->withStatus(400)->withJson(['message' => 'Usuario no encontrado']);
+    }
+
+    public function validateToken(Request $req,  Response $res)
+    {
+        if (Token::validate($this->getBearerToken($req), $_ENV['SECRET_KEY'])) {
+            return $res->withStatus(200)->withJson(['message' => 'Token valido']);
         }
         return $res->withStatus(403)->withJson(['message' => 'Acceso no autorizado']);
     }
