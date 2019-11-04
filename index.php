@@ -4,6 +4,7 @@ require './controllers/users.php';
 require './controllers/suppliers.php';
 require './controllers/categories.php';
 require './controllers/products.php';
+require './controllers/transactions.php';
 
 $app = new \Slim\App();
 
@@ -39,6 +40,12 @@ $app->group('/products', function () {
     $this->post('/update', ProductsController::class . ':update');
     $this->delete('/delete', ProductsController::class . ':delete');
     $this->post('/find', ProductsController::class . ':find');
+});
+
+$app->group('/transactions', function () {
+    $this->get('', TransactionsController::class . ':get');
+    $this->post('/create', TransactionsController::class . ':create');
+    $this->delete('/delete', TransactionsController::class . ':delete');
 });
 
 $app->run();
