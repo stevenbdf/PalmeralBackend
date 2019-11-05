@@ -23,8 +23,12 @@ class UsersController extends Validator
 
     public function get(Request $req,  Response $res)
     {
-        $user = $this->users->all();
-        return $res->withJson($user);
+        if (Token::validate($this->getBearerToken($req), $_ENV['SECRET_KEY'])) {
+            $payload = Token::getPayload($this->getBearerToken($req), $_ENV['SECRET_KEY']);
+            $user = $this->users->select('id_user', 'email')->where('id_user', '!=', $payload['id_user'])->get();
+            return $res->withJson($user);
+        }
+        return $res->withJson(['status' => 0, 'message' => 'Acceso no autorizado']);
     }
 
     public function create(Request $req,  Response $res)
@@ -37,14 +41,13 @@ class UsersController extends Validator
                 $this->users->password = password_hash($body['password'], PASSWORD_DEFAULT);
                 if ($this->users->save()) {
                     return $res
-                        ->withStatus(200)
-                        ->withJson(['message' => 'Usuario creado correctamente']);
+                        ->withJson(['status' => 1, 'message' => 'Usuario creado correctamente']);
                 }
-                return $res->withStatus(500)->withJson(['message' => 'Error al crear usuario']);
+                return $res->withJson(['status' => 0, 'message' => 'Error al crear usuario']);
             }
-            return $res->withStatus(400)->withJson(['message' => 'Contraseña incorrecta']);
+            return $res->withJson(['status' => 0, 'message' => 'Contraseña incorrecta']);
         }
-        return $res->withStatus(400)->withJson(['message' => 'Correo incorrecto']);
+        return $res->withJson(['status' => 0, 'message' => 'Correo incorrecto']);
     }
 
     public function update(Request $req,  Response $res)
@@ -56,14 +59,13 @@ class UsersController extends Validator
                 $user->email = $body['email'];
                 if ($user->save()) {
                     return $res
-                        ->withStatus(200)
-                        ->withJson(['message' => 'Usuario modificado correctamente']);
+                        ->withJson(['status' => 1, 'message' => 'Usuario modificado correctamente']);
                 }
-                return $res->withStatus(500)->withJson(['message' => 'Error al modificar usuario']);
+                return $res->withJson(['status' => 0, 'message' => 'Error al modificar usuario']);
             }
-            return $res->withStatus(400)->withJson(['message' => 'Correo incorrecto']);
+            return $res->withJson(['status' => 0, 'message' => 'Correo incorrecto']);
         }
-        return $res->withStatus(400)->withJson(['message' => 'Usuario no encontrado']);
+        return $res->withJson(['status' => 0, 'message' => 'Usuario no encontrado']);
     }
 
     public function password(Request $req,  Response $res)
@@ -76,17 +78,16 @@ class UsersController extends Validator
                     $user->password = password_hash($body['new_password'], PASSWORD_DEFAULT);
                     if ($user->save()) {
                         return $res
-                            ->withStatus(200)
-                            ->withJson(['message' => 'Contraseña modificado correctamente']);
+                            ->withJson(['status' => 1, 'message' => 'Contraseña modificado correctamente']);
                     }
-                    return $res->withStatus(500)->withJson(['message' => 'Error al modificar contraseña']);
+                    return $res->withJson(['status' => 0, 'message' => 'Error al modificar contraseña']);
                 }
-                return $res->withStatus(400)->withJson(['message' => 'Contraseña nueva invalida, 
+                return $res->withJson(['status' => 0, 'message' => 'Contraseña nueva invalida, 
                         debe contener mayusculas, minusculas, numeros y caracteres especiales']);
             }
-            return $res->withStatus(400)->withJson(['message' => 'Contraseña incorrecta']);
+            return $res->withJson(['status' => 0, 'message' => 'Contraseña incorrecta']);
         }
-        return $res->withStatus(400)->withJson(['message' => 'Usuario no encontrado']);
+        return $res->withJson(['status' => 0, 'message' => 'Usuario no encontrado']);
     }
 
     public function delete(Request $req,  Response $res)
@@ -96,17 +97,15 @@ class UsersController extends Validator
         if ($user = $this->users->find($body['id_user'])) {
             if ($user->delete()) {
                 return $res
-                    ->withStatus(200)
-                    ->withJson(['message' => 'Usuario eliminado correctamente']);
+                    ->withJson(['status' => 1, 'message' => 'Usuario eliminado correctamente']);
             }
-            return $res->withStatus(400)->withJson(['message' => 'Error al eliminar usuario']);
+            return $res->withJson(['status' => 0, 'message' => 'Error al eliminar usuario']);
         }
     }
 
     public function login(Request $req,  Response $res)
     {
         $body = $req->getParsedBody();
-
         if ($user = $this->users->where('email', $body['email'])->first()) {
             if (password_verify($body['password'], $user->password)) {
                 $payload = array(
@@ -115,14 +114,14 @@ class UsersController extends Validator
                     "exp" => time() + 1.296e+6
                 );
                 $token = Token::customPayload($payload, $_ENV['SECRET_KEY']);
-                return $res->withStatus(200)->withJson([
+                return $res->withJson([
                     'token' => $token, 'id_user' => $user->id_user,
-                    'message' => 'Bienvenido'
+                    'status' => 1, 'message' => 'Bienvenido'
                 ]);
             }
-            return $res->withStatus(400)->withJson(['message' => 'Contraseña incorrecta']);
+            return $res->withJson(['status' => 0, 'message' => 'Contraseña incorrecta']);
         }
-        return $res->withStatus(400)->withJson(['message' => 'Usuario no encontrado']);
+        return $res->withJson(['status' => 0, 'message' => 'Usuario no encontrado']);
     }
 
     public function find(Request $req,  Response $res)
@@ -130,18 +129,18 @@ class UsersController extends Validator
         $body = $req->getParsedBody();
 
         if (Token::validate($this->getBearerToken($req), $_ENV['SECRET_KEY'])) {
-            if ($user = $this->users->find($body['id_user'])) {
-                return $res->withStatus(200)->withJson(['message' => 'Usuario encontrado', 'data' => $user]);
+            if ($user = $this->users->select('id_user', 'email')->where('id_user', $body['id_user'])->first()) {
+                return $res->withJson(['status' => 1, 'message' => 'Usuario encontrado', 'data' => $user]);
             }
-            return $res->withStatus(400)->withJson(['message' => 'Usuario no encontrado']);
+            return $res->withJson(['status' => 0, 'message' => 'Usuario no encontrado']);
         }
-        return $res->withStatus(403)->withJson(['message' => 'Acceso no autorizado']);
+        return $res->withJson(['status' => 0, 'message' => 'Acceso no autorizado']);
     }
 
     public function resetPassword(Request $req,  Response $res)
     {
         $body = $req->getParsedBody();
-        
+
 
         $mail = new PHPMailer(true);
 
@@ -180,23 +179,23 @@ class UsersController extends Validator
                 $mail->AltBody = "Solicitaste reestablecer tu contraseña, tu nueva contraseña es: $nuevaContrasena";
 
                 if ($mail->send()) {
-                    return $res->withStatus(200)->withJson(['message' => 'Se ha enviado tu nueva contraseña, revisa tu correo electronico']);
+                    return $res->withJson(['status' => 1, 'message' => 'Se ha enviado tu nueva contraseña, revisa tu correo electronico']);
                 } else {
-                    return $res->withStatus(500)->withJson(['message' => 'Error al enviar correo, solicita ayuda en stevenbdf@gmail.com']);
+                    return $res->withJson(['status' => 0, 'message' => 'Error al enviar correo, solicita ayuda en stevenbdf@gmail.com']);
                 }
             } catch (Exception $e) {
-                return $res->withStatus(500)->withJson(['message' => 'Error al enviar correo, solicita ayuda en stevenbdf@gmail.com']);
+                return $res->withJson(['status' => 0, 'message' => 'Error al enviar correo, solicita ayuda en stevenbdf@gmail.com']);
             }
         }
 
-        return $res->withStatus(400)->withJson(['message' => 'Usuario no encontrado']);
+        return $res->withJson(['status' => 0, 'message' => 'Usuario no encontrado']);
     }
 
     public function validateToken(Request $req,  Response $res)
     {
         if (Token::validate($this->getBearerToken($req), $_ENV['SECRET_KEY'])) {
-            return $res->withStatus(200)->withJson(['message' => 'Token valido']);
+            return $res->withJson(['status' => 1, 'message' => 'Token valido']);
         }
-        return $res->withStatus(403)->withJson(['message' => 'Acceso no autorizado']);
+        return $res->withJson(['status' => 0, 'message' => 'Acceso no autorizado']);
     }
 }

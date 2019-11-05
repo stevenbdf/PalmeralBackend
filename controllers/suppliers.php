@@ -22,13 +22,12 @@ class SuppliersController extends Validator
             $supplier = $this->suppliers->all();
             return $res->withJson($supplier);
         }
-        return $res->withStatus(403)->withJson(['message' => 'Acceso no autorizado']);
+        return $res->withJson(['status' => 1, 'message' => 'Acceso no autorizado']);
     }
 
     public function create(Request $req,  Response $res)
     {
         $body = $req->getParsedBody();
-
         if (Token::validate($this->getBearerToken($req), $_ENV['SECRET_KEY'])) {
             if ($this->validateAlphanumeric($body['name'], 5, 1000)) {
                 $this->suppliers->name = $body['name'];
@@ -38,21 +37,23 @@ class SuppliersController extends Validator
                         $this->suppliers->phone = $body['phone'];
                         if ($this->validateEmail($body['email'])) {
                             $this->suppliers->email = $body['email'];
+                        } else {
+                            $this->suppliers->email = null;
                         }
+
                         if ($this->suppliers->save()) {
                             return $res
-                                ->withStatus(200)
-                                ->withJson(['message' => 'Proveedor creado correctamente']);
+                                ->withJson(['status' => 1, 'message' => 'Proveedor creado correctamente']);
                         }
-                        return $res->withStatus(500)->withJson(['message' => 'Error al crear proveedor']);
+                        return $res->withJson(['status' => 0, 'message' => 'Error al crear proveedor']);
                     }
-                    return $res->withStatus(400)->withJson(['message' => 'Teléfono incorrecto']);
+                    return $res->withJson(['status' => 0, 'message' => 'Teléfono incorrecto']);
                 }
-                return $res->withStatus(400)->withJson(['message' => 'Dirección incorrecta']);
+                return $res->withJson(['status' => 0, 'message' => 'Dirección incorrecta']);
             }
-            return $res->withStatus(400)->withJson(['message' => 'Nombre incorrecto']);
+            return $res->withJson(['status' => 0, 'message' => 'Nombre incorrecto']);
         }
-        return $res->withStatus(403)->withJson(['message' => 'Acceso no autorizado']);
+        return $res->withJson(['status' => 0, 'message' => 'Acceso no autorizado']);
     }
 
     public function update(Request $req, Response $res)
@@ -75,20 +76,19 @@ class SuppliersController extends Validator
 
                             if ($supplier->save()) {
                                 return $res
-                                    ->withStatus(200)
-                                    ->withJson(['message' => 'Proveedor modificado correctamente']);
+                                    ->withJson(['status' => 1, 'message' => 'Proveedor modificado correctamente']);
                             }
-                            return $res->withStatus(500)->withJson(['message' => 'Error al modificar proveedor']);
+                            return $res->withJson(['status' => 0, 'message' => 'Error al modificar proveedor']);
                         }
-                        return $res->withStatus(400)->withJson(['message' => 'Teléfono incorrecto']);
+                        return $res->withJson(['status' => 0, 'message' => 'Teléfono incorrecto']);
                     }
-                    return $res->withStatus(400)->withJson(['message' => 'Dirección incorrecta']);
+                    return $res->withJson(['status' => 0, 'message' => 'Dirección incorrecta']);
                 }
-                return $res->withStatus(400)->withJson(['message' => 'Nombre incorrecto']);
+                return $res->withJson(['status' => 0, 'message' => 'Nombre incorrecto']);
             }
-            return $res->withStatus(403)->withJson(['message' => 'Proveedor no encontrado']);
+            return $res->withJson(['status' => 0, 'message' => 'Proveedor no encontrado']);
         }
-        return $res->withStatus(403)->withJson(['message' => 'Acceso no autorizado']);
+        return $res->withJson(['status' => 0, 'message' => 'Acceso no autorizado']);
     }
 
     public function delete(Request $req,  Response $res)
@@ -99,14 +99,14 @@ class SuppliersController extends Validator
             if ($supplier = $this->suppliers->find($body['id_supplier'])) {
                 if ($supplier->delete()) {
                     return $res
-                        ->withStatus(200)
-                        ->withJson(['message' => 'Proveedor eliminado correctamente']);
+                        
+                        ->withJson(['status' => 1, 'message' => 'Proveedor eliminado correctamente']);
                 }
-                return $res->withStatus(400)->withJson(['message' => 'Error al eliminar proveedor']);
+                return $res->withJson(['status' => 0, 'message' => 'Error al eliminar proveedor']);
             }
-            return $res->withStatus(403)->withJson(['message' => 'Proveedor no encontrado']);
+            return $res->withJson(['status' => 0, 'message' => 'Proveedor no encontrado']);
         }
-        return $res->withStatus(403)->withJson(['message' => 'Acceso no autorizado']);
+        return $res->withJson(['status' => 0, 'message' => 'Acceso no autorizado']);
     }
 
     public function find(Request $req,  Response $res)
@@ -115,10 +115,10 @@ class SuppliersController extends Validator
 
         if (Token::validate($this->getBearerToken($req), $_ENV['SECRET_KEY'])) {
             if ($supplier = $this->suppliers->find($body['id_supplier'])) {
-                return $res->withStatus(200)->withJson(['message' => 'Proveedor encontrado', 'data' => $supplier]);
+                return $res->withJson(['status' => 1, 'message' => 'Proveedor encontrado', 'data' => $supplier]);
             }
-            return $res->withStatus(400)->withJson(['message' => 'Proveedor no encontrado']);
+            return $res->withJson(['status' => 0, 'message' => 'Proveedor no encontrado']);
         }
-        return $res->withStatus(403)->withJson(['message' => 'Acceso no autorizado']);
+        return $res->withJson(['status' => 0, 'message' => 'Acceso no autorizado']);
     }
 }

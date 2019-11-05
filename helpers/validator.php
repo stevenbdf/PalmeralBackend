@@ -440,14 +440,16 @@ class Validator
 
     public function getBearerToken($req)
     {
-        $headers = $req->getHeader('HTTP_AUTHORIZATION')[0];
-        // HEADER: Get the access token from the header
-        if (!empty($headers)) {
-            if (preg_match('/Bearer\s(\S+)/', $headers, $matches)) {
-                return $matches[1];
+        if ($req->hasHeader('HTTP_AUTHORIZATION')) {
+            $headers = $req->getHeader('HTTP_AUTHORIZATION')[0];
+            // HEADER: Get the access token from the header
+            if (!empty($headers)) {
+                if (preg_match('/Bearer\s(\S+)/', $headers, $matches)) {
+                    return $matches[1];
+                }
             }
         }
-        return null;
+        return ' ';
     }
 
     public function generateRandomString($length = 8)
