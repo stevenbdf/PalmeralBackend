@@ -20,10 +20,14 @@ class ProductsController extends Validator
     public function get(Request $req,  Response $res)
     {
         if (Token::validate($this->getBearerToken($req), $_ENV['SECRET_KEY'])) {
-            $products = $this->products->all();
+            $products = $this->products
+                ->join('suppliers', 'products.id_supplier', '=', 'suppliers.id_supplier')
+                ->join('categories', 'products.id_category', '=', 'categories.id_category')
+                ->select('products.id_product', 'image', 'products.description', 'categories.name as category', 'suppliers.name as supplier')
+                ->get();
             return $res->withJson($products);
         }
-        return $res->withStatus(403)->withJson(['message' => 'Acceso no autorizado']);
+        return $res->withJson(['status' => 1, 'message' => 'Acceso no autorizado']);
     }
 
     public function create(Request $req,  Response $res)
@@ -44,24 +48,22 @@ class ProductsController extends Validator
                             if ($this->products->save()) {
                                 if ($this->saveFile($image, $this->PATH, $this->products->image)) {
                                     return $res
-                                        ->withStatus(200)
-                                        ->withJson(['message' => 'Producto creado correctamente']);
+                                        ->withJson(['status' => 1, 'message' => 'Producto creado correctamente']);
                                 }
                                 return $res
-                                    ->withStatus(200)
-                                    ->withJson(['message' => 'Producto creado, no se guardo la imagen']);
+                                    ->withJson(['status' => 1, 'message' => 'Producto creado, no se guardo la imagen']);
                             }
-                            return $res->withStatus(400)->withJson(['message' => 'Error al crear producto']);
+                            return $res->withJson(['status' => 0, 'message' => 'Error al crear producto']);
                         }
-                        return $res->withStatus(400)->withJson(['message' => $this->getImageError()]);
+                        return $res->withJson(['status' => 0, 'message' => $this->getImageError()]);
                     }
-                    return $res->withStatus(400)->withJson(['message' => 'Nombre incorrecto']);
+                    return $res->withJson(['status' => 0, 'message' => 'Nombre incorrecto']);
                 }
-                return $res->withStatus(400)->withJson(['message' => 'Categoria incorrecta']);
+                return $res->withJson(['status' => 0, 'message' => 'Categoria incorrecta']);
             }
-            return $res->withStatus(400)->withJson(['message' => 'Proveedor incorrecto']);
+            return $res->withJson(['status' => 0, 'message' => 'Proveedor incorrecto']);
         }
-        return $res->withStatus(403)->withJson(['message' => 'Acceso no autorizado']);
+        return $res->withJson(['status' => 0, 'message' => 'Acceso no autorizado']);
     }
 
     public function update(Request $req,  Response $res)
@@ -87,27 +89,25 @@ class ProductsController extends Validator
                                 if ($isImage) {
                                     if ($this->saveFile($image, $this->PATH, $product->image)) {
                                         return $res
-                                            ->withStatus(200)
-                                            ->withJson(['message' => 'Producto modificado correctamente']);
-                                    }
-                                    return $res->withStatus(200)->withJson(['message' => 'Producto modificado, no se modifico la imagen']);
-                                }
 
+                                            ->withJson(['status' => 1, 'message' => 'Producto modificado correctamente']);
+                                    }
+                                    return $res->withJson(['status' => 1, 'message' => 'Producto modificado, no se modifico la imagen']);
+                                }
                                 return $res
-                                    ->withStatus(200)
-                                    ->withJson(['message' => 'Producto modificado, no se guardo la imagen']);
+                                    ->withJson(['status' => 1, 'message' => 'Producto modificado, no se guardo la imagen']);
                             }
-                            return $res->withStatus(500)->withJson(['message' => 'Error al modificar producto']);
+                            return $res->withJson(['status' => 0, 'message' => 'Error al modificar producto']);
                         }
-                        return $res->withStatus(400)->withJson(['message' => 'Nombre incorrecto']);
+                        return $res->withJson(['status' => 0, 'message' => 'Nombre incorrecto']);
                     }
-                    return $res->withStatus(400)->withJson(['message' => 'Categoria incorrecta']);
+                    return $res->withJson(['status' => 0, 'message' => 'Categoria incorrecta']);
                 }
-                return $res->withStatus(400)->withJson(['message' => 'Proveedor incorrecto']);
+                return $res->withJson(['status' => 0, 'message' => 'Proveedor incorrecto']);
             }
-            return $res->withStatus(400)->withJson(['message' => 'Producto no encontrado']);
+            return $res->withJson(['status' => 0, 'message' => 'Producto no encontrado']);
         }
-        return $res->withStatus(403)->withJson(['message' => 'Acceso no autorizado']);
+        return $res->withJson(['status' => 0, 'message' => 'Acceso no autorizado']);
     }
 
     public function delete(Request $req, Response $res)
@@ -118,15 +118,15 @@ class ProductsController extends Validator
             if ($product = $this->products->find($body['id_product'])) {
                 if ($product->delete()) {
                     if ($this->deleteFile($this->PATH, $product->image)) {
-                        return $res->withStatus(200)->withJson(['message' => 'Producto eliminado correctamente']);            
+                        return $res->withJson(['status' => 1, 'message' => 'Producto eliminado correctamente']);
                     }
-                    return $res->withStatus(200)->withJson(['message' => 'Producto eliminado, no se pudo eliminar la imagen']);            
+                    return $res->withJson(['status' => 1, 'message' => 'Producto eliminado, no se pudo eliminar la imagen']);
                 }
-                return $res->withStatus(500)->withJson(['message' => 'Error al aliminar producto']);    
+                return $res->withJson(['status' => 0, 'message' => 'Error al aliminar producto']);
             }
-            return $res->withStatus(400)->withJson(['message' => 'Producto no encontrado']);
+            return $res->withJson(['status' => 0, 'message' => 'Producto no encontrado']);
         }
-        return $res->withStatus(403)->withJson(['message' => 'Acceso no autorizado']);
+        return $res->withJson(['status' => 0, 'message' => 'Acceso no autorizado']);
     }
 
     public function find(Request $req, Response $res)
@@ -135,10 +135,10 @@ class ProductsController extends Validator
 
         if (Token::validate($this->getBearerToken($req), $_ENV['SECRET_KEY'])) {
             if ($product = $this->products->find($body['id_product'])) {
-                return $res->withStatus(200)->withJson(['message' => 'Producto encontrado', 'data' => $product]);
+                return $res->withJson(['status' => 1, 'message' => 'Producto encontrado', 'data' => $product]);
             }
-            return $res->withStatus(400)->withJson(['message' => 'Producto no encontrado']);
+            return $res->withJson(['status' => 0, 'message' => 'Producto no encontrado']);
         }
-        return $res->withStatus(403)->withJson(['message' => 'Acceso no autorizado']);
+        return $res->withJson(['status' => 0, 'message' => 'Acceso no autorizado']);
     }
 }

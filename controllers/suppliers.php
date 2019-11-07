@@ -22,7 +22,7 @@ class SuppliersController extends Validator
             $supplier = $this->suppliers->all();
             return $res->withJson($supplier);
         }
-        return $res->withJson(['status' => 1, 'message' => 'Acceso no autorizado']);
+        return $res->withJson(['status' => 0, 'message' => 'Acceso no autorizado']);
     }
 
     public function create(Request $req,  Response $res)

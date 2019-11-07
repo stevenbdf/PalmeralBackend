@@ -22,7 +22,7 @@ class CategoriesController extends Validator
             $categories = $this->categories->all();
             return $res->withJson($categories);
         }
-        return $res->withStatus(403)->withJson(['message' => 'Acceso no autorizado']);
+        return $res->withJson(['status' => 0, 'message' => 'Acceso no autorizado']);
     }
 
     public function create(Request $req,  Response $res)
@@ -36,16 +36,15 @@ class CategoriesController extends Validator
                     $this->categories->description = $body['description'];
                     if ($this->categories->save()) {
                         return $res
-                            ->withStatus(200)
-                            ->withJson(['message' => 'Categoria creada correctamente']);
+                            ->withJson(['status' => 1, 'message' => 'Categoria creada correctamente']);
                     }
-                    return $res->withStatus(500)->withJson(['message' => 'Error al crear categoria']);
+                    return $res->withJson(['status' => 0, 'message' => 'Error al crear categoria']);
                 }
-                return $res->withStatus(400)->withJson(['message' => 'Descripción incorrecta']);
+                return $res->withJson(['status' => 0, 'message' => 'Descripción incorrecta']);
             }
-            return $res->withStatus(400)->withJson(['message' => 'Nombre incorrecto']);
+            return $res->withJson(['status' => 0, 'message' => 'Nombre incorrecto']);
         }
-        return $res->withStatus(403)->withJson(['message' => 'Acceso no autorizado']);
+        return $res->withJson(['status' => 0, 'message' => 'Acceso no autorizado']);
     }
 
     public function update(Request $req,  Response $res)
@@ -60,18 +59,17 @@ class CategoriesController extends Validator
                         $category->description = $body['description'];
                         if ($category->save()) {
                             return $res
-                                ->withStatus(200)
-                                ->withJson(['message' => 'Categoria modificada correctamente']);
+                                ->withJson(['status' => 1, 'message' => 'Categoria modificada correctamente']);
                         }
-                        return $res->withStatus(500)->withJson(['message' => 'Error al modificar categoria']);
+                        return $res->withJson(['status' => 0, 'message' => 'Error al modificar categoria']);
                     }
-                    return $res->withStatus(400)->withJson(['message' => 'Descripción incorrecta']);
+                    return $res->withJson(['status' => 0, 'message' => 'Descripción incorrecta']);
                 }
-                return $res->withStatus(400)->withJson(['message' => 'Nombre incorrecto']);
+                return $res->withJson(['status' => 0, 'message' => 'Nombre incorrecto']);
             }
-            return $res->withStatus(400)->withJson(['message' => 'Categoria no encontrada']);
+            return $res->withJson(['status' => 0, 'message' => 'Categoria no encontrada']);
         }
-        return $res->withStatus(403)->withJson(['message' => 'Acceso no autorizado']);
+        return $res->withJson(['status' => 0, 'message' => 'Acceso no autorizado']);
     }
 
     public function delete(Request $req,  Response $res)
@@ -82,14 +80,13 @@ class CategoriesController extends Validator
             if ($category = $this->categories->find($body['id_category'])) {
                 if ($category->delete()) {
                     return $res
-                        ->withStatus(200)
-                        ->withJson(['message' => 'Categoria eliminada correctamente']);
+                        ->withJson(['status' => 1, 'message' => 'Categoria eliminada correctamente']);
                 }
-                return $res->withStatus(400)->withJson(['message' => 'Error al eliminar categoria']);
+                return $res->withJson(['status' => 0, 'message' => 'Error al eliminar categoria']);
             }
-            return $res->withStatus(403)->withJson(['message' => 'Categoria no encontrada']);
+            return $res->withJson(['status' => 0, 'message' => 'Categoria no encontrada']);
         }
-        return $res->withStatus(403)->withJson(['message' => 'Acceso no autorizado']);
+        return $res->withJson(['status' => 0, 'message' => 'Acceso no autorizado']);
     }
 
     public function find(Request $req,  Response $res)
@@ -98,10 +95,10 @@ class CategoriesController extends Validator
 
         if (Token::validate($this->getBearerToken($req), $_ENV['SECRET_KEY'])) {
             if ($category = $this->categories->find($body['id_category'])) {
-                return $res->withStatus(200)->withJson(['message' => 'Categoria encontrada', 'data' => $category]);
+                return $res->withJson(['status' => 1, 'message' => 'Categoria encontrada', 'data' => $category]);
             }
-            return $res->withStatus(400)->withJson(['message' => 'Categoria no encontrada']);
+            return $res->withJson(['status' => 0, 'message' => 'Categoria no encontrada']);
         }
-        return $res->withStatus(403)->withJson(['message' => 'Acceso no autorizado']);
+        return $res->withJson(['status' => 0, 'message' => 'Acceso no autorizado']);
     }
 }
