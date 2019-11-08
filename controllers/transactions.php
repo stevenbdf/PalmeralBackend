@@ -19,10 +19,25 @@ class TransactionsController extends Validator
     public function get(Request $req,  Response $res)
     {
         if (Token::validate($this->getBearerToken($req), $_ENV['SECRET_KEY'])) {
-            $transactions = $this->transactions->all();
+            $transactions = $this->transactions
+                ->join('products', 'transactions.id_product', '=', 'products.id_product')
+                ->select(
+                    'id_transaction',
+                    'date',
+                    'products.description as product',
+                    'transactions.description',
+                    'sale_price',
+                    'stock',
+                    'type',
+                    'purchase_price',
+                    'profit',
+                    'quantity'
+                )
+                ->orderBy('id_transaction', 'desc')
+                ->get();
             return $res->withJson($transactions);
         }
-        return $res->withStatus(403)->withJson(['message' => 'Acceso no autorizado']);
+        return $res->withJson(['status' => 0, 'message' => 'Acceso no autorizado']);
     }
 
     public function create(Request $req,  Response $res)
@@ -58,7 +73,7 @@ class TransactionsController extends Validator
                                                 if ($transaction['stock'] >= $body['quantity']) {
                                                     $this->transactions->stock = $transaction['stock'] - $body['quantity'];
                                                 } else {
-                                                    return $res->withStatus(400)->withJson(['message' => 'No hay suficiente stock para restar']);
+                                                    return $res->withJson(['status' => 0, 'message' => 'No hay suficiente stock para restar']);
                                                 }
                                             }
                                         } else {
@@ -67,26 +82,25 @@ class TransactionsController extends Validator
 
                                         if ($this->transactions->save()) {
                                             return $res
-                                                ->withStatus(200)
-                                                ->withJson(['message' => 'Transacción creada correctamente']);
+                                                ->withJson(['status' => 1, 'message' => 'Transacción creada correctamente']);
                                         }
-                                        return $res->withStatus(500)->withJson(['message' => 'Error al crear transacción']);
+                                        return $res->withJson(['status' => 0, 'message' => 'Error al crear transacción']);
                                     }
-                                    return $res->withStatus(400)->withJson(['message' => 'Cantidad incorrecta, debe ser un valor númerico']);
+                                    return $res->withJson(['status' => 0, 'message' => 'Cantidad incorrecta, debe ser un valor númerico']);
                                 }
-                                return $res->withStatus(400)->withJson(['message' => '% de ganancia incorrecto, debe ser un valor entre 0 y 100']);
+                                return $res->withJson(['status' => 0, 'message' => '% de ganancia incorrecto, debe ser un valor entre 0 y 100']);
                             }
-                            return $res->withStatus(400)->withJson(['message' => 'Precio de compra incorrecto']);
+                            return $res->withJson(['status' => 0, 'message' => 'Precio de compra incorrecto']);
                         }
-                        return $res->withStatus(400)->withJson(['message' => 'Fecha incorrecta']);
+                        return $res->withJson(['status' => 0, 'message' => 'Fecha incorrecta']);
                     }
-                    return $res->withStatus(400)->withJson(['message' => 'Tipo de transacción incorrecta']);
+                    return $res->withJson(['status' => 0, 'message' => 'Tipo de transacción incorrecta']);
                 }
-                return $res->withStatus(400)->withJson(['message' => 'Descripción incorrecta, debe contener entre 5 y 1000 carácteres']);
+                return $res->withJson(['status' => 0, 'message' => 'Descripción incorrecta, debe contener entre 5 y 1000 carácteres']);
             }
-            return $res->withStatus(400)->withJson(['message' => 'Producto incorrecto']);
+            return $res->withJson(['status' => 0, 'message' => 'Producto incorrecto']);
         }
-        return $res->withStatus(403)->withJson(['message' => 'Acceso no autorizado']);
+        return $res->withJson(['status' => 0, 'message' => 'Acceso no autorizado']);
     }
 
     public function delete(Request $req,  Response $res)
@@ -96,14 +110,12 @@ class TransactionsController extends Validator
         if (Token::validate($this->getBearerToken($req), $_ENV['SECRET_KEY'])) {
             if ($transaction = $this->transactions->find($body['id_transaction'])) {
                 if ($transaction->delete()) {
-                    return $res
-                        ->withStatus(200)
-                        ->withJson(['message' => 'Transacción eliminada correctamente']);
+                    return $res->withJson(['status' => 1, 'message' => 'Transacción eliminada correctamente']);
                 }
-                return $res->withStatus(400)->withJson(['message' => 'Error al eliminar transacción']);
+                return $res->withJson(['status' => 0, 'message' => 'Error al eliminar transacción']);
             }
-            return $res->withStatus(403)->withJson(['message' => 'Transacción no encontrada']);
+            return $res->withJson(['status' => 0, 'message' => 'Transacción no encontrada']);
         }
-        return $res->withStatus(403)->withJson(['message' => 'Acceso no autorizado']);
+        return $res->withJson(['status' => 0, 'message' => 'Acceso no autorizado']);
     }
 }
